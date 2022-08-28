@@ -4,10 +4,15 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <future>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/lexical_cast.hpp>
+#include "boost/date_time/posix_time/posix_time.hpp" 
 #include "Player.hpp"
 
 #define RESET "\033[0m"
@@ -23,13 +28,18 @@ using std::string;
 using std::cout;
 using std::cin;
 using std::endl;
+using namespace boost::posix_time;
 
+#define GAME_DURATION_SECONDS 5
 class Game
 {
 	private:
 		vector<string> _uuids;
 		vector<string> _filteredUuids;
 		char _randomChar;
+		ptime _startTime;
+		ptime _endTime;
+		time_duration _duration;
 		
 	public:
 		Game(/* args */);
@@ -42,7 +52,16 @@ class Game
 		char generate_random_char();
 		string generate_random_uuid();
 		void print_uuids();
+	
+		void start_timer();
+		int get_time_left();
+
+		void read_input(string &input);
 };
+
+
+
+
 
 
 
