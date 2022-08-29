@@ -40,9 +40,10 @@ class Game
 		ptime _startTime;
 		ptime _endTime;
 		time_duration _duration;
+		bool _gameOver;
 		
 	public:
-		Game(/* args */);
+		Game();
 		~Game();
 		void init(void);
 		void start(Player &player);
@@ -56,8 +57,17 @@ class Game
 		void start_timer();
 		int get_time_left();
 
-		void read_input(string &input);
+		void result(string &input, Player &player, int time_left);
+
+		bool check_input(string &input);
+		bool get_game_over();
 };
+
+
+
+
+
+
 
 
 

@@ -19,11 +19,9 @@ class Player
 		~Player();
 
 		void add_score(int score);
+		int get_score();
+		string &get_name();
 };
-
-
-
-
 
 
 #endif

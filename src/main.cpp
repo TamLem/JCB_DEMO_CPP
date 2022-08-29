@@ -17,6 +17,9 @@ int main(void)
 	cin >> name;
 	Player player(name);
     game.start(player);
-    cout << "game ended" << endl;
+    while(game.get_game_over() == false)
+    {
+        game.start(player);
+    }
     return 0;
 }

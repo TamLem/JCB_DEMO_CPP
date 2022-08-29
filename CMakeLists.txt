@@ -12,6 +12,6 @@ set(BOOST_PATH "/Users/tlemma/goinfre/boost_1_80_0/")
 include_directories(${BOOST_PATH})
 include_directories("include")
 
-add_executable("JCMDemo" "src/main.cpp" "src/Game.cpp" "src/Player.cpp")
+add_executable("JCMDemo" "src/main.cpp" "src/Game.cpp" "src/Player.cpp" "src/Game_utils.cpp")
 
 install(TARGETS JCMDemo DESTINATION bin)

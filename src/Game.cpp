@@ -1,6 +1,6 @@
 #include "Game.hpp"
 
-Game::Game(/* args */)
+Game::Game(): _gameOver(false)
 {
 }
 
@@ -43,120 +43,74 @@ int Game::get_time_left()
 	return time_left.total_seconds();
 }
 
-void Game::read_input(string &input)
+bool Game::check_input(string &input)
 {
-	auto io_thread = std::thread([&]() {
+	//use select to check if stdin is readable
+	fd_set fds;
+	FD_ZERO(&fds);
+	FD_SET(0, &fds);
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	select(1, &fds, NULL, NULL, &tv);
+	if (FD_ISSET(0, &fds))
+	{
 		cin >> input;
-	});
+		return true;
+	}
+	return false;
 }
 
 void Game::start(Player &player)
 {
+	cout << YELLOW << BOLD << "Welcome " << player.get_name() << "!" << endl;
+	cout << YELLOW << BOLD << "You have " << GAME_DURATION_SECONDS << " seconds to guess the missing charachter!" << RESET << endl;
+	cout << "press ENTER to start..." << endl;
+	cin.ignore();
+	cin.get();
+	
+	cout << endl;
+
 	this->init();
 	this->filter_uuids();
 	this->print_uuids();
 	this->start_timer();
 
-	// time_iterator titr(this->_startTime, seconds(1));
 	string input;
-
-	auto future = std::async(std::launch::async, [](){
-		string str;
-		cin >> str;
-		return str;
-    });
-
-	std::mutex mtx;
-	bool input_received = false;
-	auto io_thread = std::thread([&]() {
-		// cin >> input;
-		if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready)
-		{
-			mtx.lock();
-			input_received = true;
-			mtx.unlock();
-		}
-	});
-
 	cout << "char " << this->_randomChar << endl;
-	int time_left = this->get_time_left();
-	while(time_left > 0)
+	int time_left = 0;
+	while((time_left = this->get_time_left()))
 	{
 		std::cout << YELLOW << BOLD << "\rTime left: " << time_left 
 				<< " " << BLUE << BOLD << "Please enter the missing char: " << std::flush;
 	
-		mtx.lock();
-		if (input_received)
-		{
-			mtx.unlock();
+		if (check_input(input))
 			break ;
-		}
-		mtx.unlock();
-		if (!input.empty())
-		{
-			break;
-		}
 		usleep(1000000);
-		time_left = this->get_time_left();
 	}
-	io_thread.join();
-	
+	this->result(input, player, time_left);
+}
+
+void Game::result(string &input, Player &player, int time_left)
+{
+	bool result = false;
 	cout << endl;
 	if (time_left <= 0)
 	{
 		cout << RED << BOLD << "Time is up!" << RESET << endl;
-		cout << RED << BOLD << "You lose!" << RESET << endl;
-		exit(0);
 	}
-	input = future.get();
-	cout << input << endl;
-	if (input[0] == _randomChar)
+	if (time_left > 0 && input.length() == 1 && input[0] == _randomChar)
 	{
+		result = true;
 		cout << GREEN << BOLD << "You win!" << RESET << endl;
-		player.add_score(1);
+		player.add_score(time_left);
 	}
 	else
 	{
-		cout << RED << BOLD << "You lose!" << RESET << endl;
+		cout << RED << BOLD << "You lose!" << endl << 
+			"The missing char was " << this->_randomChar << RESET << endl;
 	}
-}
-
-void Game::filter_uuids(void)
-{
-	if (_uuids.size() == 0)
-		return ;
-	cout << YELLOW << BOLD << "Filtering uuids: " << RESET << endl;
-	for (vector<string>::iterator it = this->_uuids.begin(); it != this->_uuids.end(); it++)
-	{
-		if ((*it).find(_randomChar) != string::npos)
-		{
-			this->_filteredUuids.push_back(*it);
-		}
-	}
-}
-
-
-
-string Game::generate_random_uuid()
-{
-    string uuid_str = boost::lexical_cast<std::string>(boost::uuids::random_generator()());
-    return uuid_str;
-}
-
-char Game::generate_random_char()
-{
-    char c = rand() % 16;
-    if (c < 10)
-        c += '0';
-    else
-        c += 'a' - 10;
-    return c;
-}
-
-void Game::print_uuids()
-{
-	for (vector<string>::iterator it = this->_filteredUuids.begin(); it != this->_filteredUuids.end(); it++)
-	{
-		cout << GREEN << BOLD <<  *it << RESET << endl;
-	}
+	cout << GREEN << BOLD << "Score: " << RESET << (result ? time_left : 0) << endl;
+	cout << GREEN << BOLD << "Total score: " << RESET << player.get_score() << endl;
+	this->_gameOver = !result;
 }
