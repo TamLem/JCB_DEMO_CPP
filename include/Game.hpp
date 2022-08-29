@@ -4,10 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <future>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <signal.h>
+#include <sys/select.h>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -30,7 +27,7 @@ using std::cin;
 using std::endl;
 using namespace boost::posix_time;
 
-#define GAME_DURATION_SECONDS 5
+#define GAME_DURATION_SECONDS 30
 class Game
 {
 	private:
@@ -45,23 +42,30 @@ class Game
 	public:
 		Game();
 		~Game();
+
+		// Initialize the game
 		void init(void);
 		void start(Player &player);
 		void filter_uuids(void);
+		void welcome_player(Player &player);
 
-		/* utils */
+
+		// Getters
+		bool get_game_over();
+
+		//utils
 		char generate_random_char();
 		string generate_random_uuid();
 		void print_uuids();
+		bool check_result(string &input);
+		void show_score(Player &player, int time_left, bool result);
+		bool check_input(string &input);
 	
+		//time utils
 		void start_timer();
 		int get_time_left();
-
-		void result(string &input, Player &player, int time_left);
-
-		bool check_input(string &input);
-		bool get_game_over();
 };
+
 
 
 

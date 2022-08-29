@@ -45,7 +45,6 @@ int Game::get_time_left()
 
 bool Game::check_input(string &input)
 {
-	//use select to check if stdin is readable
 	fd_set fds;
 	FD_ZERO(&fds);
 	FD_SET(0, &fds);
@@ -61,47 +60,75 @@ bool Game::check_input(string &input)
 	return false;
 }
 
+void Game::welcome_player(Player &player)
+{
+	if (player.get_score() == 0)
+		cout << YELLOW << BOLD << "Welcome " << player.get_name() << "!" << endl;
+	else
+		cout << YELLOW << BOLD << "Welcome back " << player.get_name() << "!" << endl;
+	cout << YELLOW << BOLD << "You have " << GAME_DURATION_SECONDS << " seconds to guess the missing charachter! [0-9a-f]" << RESET << endl;
+	cout << GREEN << "press ENTER to start... or type 'exit' to quit" << endl;
+	cin.ignore();
+	string input;
+	std::getline(cin, input);
+	if (input == "exit")
+		exit(0);
+	cout << endl;
+}
+
 void Game::start(Player &player)
 {
-	cout << YELLOW << BOLD << "Welcome " << player.get_name() << "!" << endl;
-	cout << YELLOW << BOLD << "You have " << GAME_DURATION_SECONDS << " seconds to guess the missing charachter!" << RESET << endl;
-	cout << "press ENTER to start..." << endl;
-	cin.ignore();
-	cin.get();
-	
-	cout << endl;
-
+	this->welcome_player(player);
 	this->init();
 	this->filter_uuids();
 	this->print_uuids();
 	this->start_timer();
 
 	string input;
-	cout << "char " << this->_randomChar << endl;
 	int time_left = 0;
+	bool result = false;
+	cout << "missing char " << this->_randomChar << endl;
 	while((time_left = this->get_time_left()))
 	{
-		std::cout << YELLOW << BOLD << "\rTime left: " << time_left 
-				<< " " << BLUE << BOLD << "Please enter the missing char: " << std::flush;
-	
 		if (check_input(input))
-			break ;
-		usleep(1000000);
+		{
+			if ((result = this->check_result(input)))
+			{
+				break;
+			}
+		}
+		else
+		{
+			std::cout << YELLOW << BOLD << "\rTime left: " << time_left 
+					<< " " << BLUE << BOLD << "Please enter the missing char: " << std::flush;
+		}
+		usleep(100000);
 	}
-	this->result(input, player, time_left);
+	this->show_score(player, time_left, result);
 }
 
-void Game::result(string &input, Player &player, int time_left)
+bool Game::check_result(string &input)
 {
-	bool result = false;
-	cout << endl;
+	if (input.length() > 1 || string("0123456789abcdef").find(input) == string::npos)
+	{
+		cout << RED << BOLD << "Invalid input! Guess from [0-9a-f]" << RESET << endl;
+		return false;
+	}
+	if (input[0] == this->_randomChar)
+		return true;
+	cout << RED << BOLD << "Wrong!" << RESET << endl;
+	return false;
+}
+
+
+void Game::show_score(Player &player, int time_left, bool result)
+{
 	if (time_left <= 0)
 	{
 		cout << RED << BOLD << "Time is up!" << RESET << endl;
 	}
-	if (time_left > 0 && input.length() == 1 && input[0] == _randomChar)
+	if (result)
 	{
-		result = true;
 		cout << GREEN << BOLD << "You win!" << RESET << endl;
 		player.add_score(time_left);
 	}

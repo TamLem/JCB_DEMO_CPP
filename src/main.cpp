@@ -6,8 +6,6 @@ using std::cout;
 using std::endl;
 using std::string;
 
-
-
 int main(void) 
 {
     Game game;
